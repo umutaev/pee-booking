@@ -11,7 +11,7 @@ def prepare():
 					minutes = str(minutes_int)
 					if len(minutes) < 2:
 						minutes = "0" + minutes
-					new_record = TimeRecord(floor = floor, record_time = (hour + ":" + minutes), username = "-", gender = gender)
+					new_record = TimeRecord(floor = floor, record_time = (hour + ":" + minutes), username = "-", username_second = "-",gender = gender)
 					db.add(new_record)
 					db.commit()
 	db.close()

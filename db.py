@@ -10,6 +10,7 @@ class TimeRecord(Base):
 	floor = Column(Integer)
 	record_time = Column(String)
 	username = Column(String)
+	username_second = Column(String)
 	gender = Column(Integer)
 
 engine = create_engine('sqlite:///timetable.db')
