@@ -21,6 +21,9 @@ class User(Base):
 	username = Column(String)
 	telegram_id = Column(Integer)
 	is_admin = Column(Boolean)
+	floor = Column(Integer)
+	gender = Column(Integer)
+
 
 logging.warning("Connecting to DB...")
 engine = create_engine("sqlite:///timetable.db")
