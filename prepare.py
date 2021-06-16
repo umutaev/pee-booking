@@ -1,4 +1,4 @@
-from .db import db, TimeRecord
+from db import db, TimeRecord
 
 
 def prepare():

@@ -3,7 +3,7 @@ from sqlalchemy.sql.expression import update
 from sqlalchemy import or_
 from server_logging import logging
 
-from db import db, TimeRecord
+from db import db, TimeRecord, User
 
 routes = web.RouteTableDef()
 
@@ -86,7 +86,6 @@ async def new_record(request):
 	response = {
 		"status": "ok",
 	}
-	logging.warning("Successful")
 	return web.json_response(response)
 
 
@@ -132,5 +131,23 @@ async def remove_record(request):
 	response = {
 		"status": "ok",
 	}
-	logging.warning("Succesful")
 	return web.json_response(response)
+
+@routes.post("/{username}")
+async def new_user(request):
+	username = request.match_info["username"]
+	body = await request.json()
+	telegram_id = body["telegram_id"]
+	logging.warning("Creating new user " + username + " with id " + telegram_id)
+	existing_user = (
+		db.query(User)
+		.filter(User.username == username, User.telegram_id == telegram_id)
+		.all()
+	)
+	if len(existing_user) > 0:
+		logging.warning("User already exists")
+		raise web.HTTPBadRequest
+	new_user = User(username=username, telegram_id=telegram_id, is_admin=False)
+	db.add(new_user)
+	db.commit()
+	raise web.HTTPOk

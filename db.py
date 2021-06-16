@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import Column, Integer, String, Boolean, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from server_logging import logging
@@ -14,6 +14,13 @@ class TimeRecord(Base):
     username = Column(String)
     username_second = Column(String)
     gender = Column(Integer)
+
+class User(Base):
+	__tablename__ = "users"
+	id = Column(Integer, primary_key=True)
+	username = Column(String)
+	telegram_id = Column(Integer)
+	is_admin = Column(Boolean)
 
 logging.warning("Connecting to DB...")
 engine = create_engine("sqlite:///timetable.db")
