@@ -11,7 +11,7 @@ class UserBackend:
             if r.status_code == 400:
                 return False
         if username is not None:
-            r = requests.get(self._server + "/" + user_id)
+            r = requests.get(self._server + "/" + str(user_id))
             if r.status_code == 400:
                 return False
         if user_id is None and username is None:
@@ -34,7 +34,13 @@ class UserBackend:
         )
         if r.status_code == 400:
             return False
-        r = requests.post()
+        r = requests.post(
+            self._server + "/" + sex + "/" + floor + "/" + username,
+            json={
+                "telegram_id": user_id
+            },
+            headers={"Content-Type": "application/json"},
+        )
         return True
 
 

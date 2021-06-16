@@ -14,14 +14,13 @@ logging.basicConfig(filename="bot.log", filemode="a", encoding="utf-8")
 
 # Config
 API_TOKEN = environ["PEE_BOOKING_BOT_TOKEN"]
-SERVER = "http://localhost"
+SERVER = "http://0.0.0.0:8080"
 FLOORS = ["1", "2", "3", "4"]
 
 # Bot
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-
 
 class reg(StatesGroup):
     gender = aiogram.dispatcher.filters.state.State()
@@ -30,7 +29,8 @@ class reg(StatesGroup):
 
 @dp.message_handler(commands=["start"])
 async def handle_start(message: aiogram.types.Message):
-    if not await backend.check_user(username=message.chat.username):
+    UserExists = backend.check_user(username=message.chat.username)
+    if not UserExists:
         keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
             row_width=1, one_time_keyboard=True
         )
@@ -94,15 +94,15 @@ async def service_sign_up(
 ):
     await state.update_data(floor=message.text)
     async with state.proxy() as data:
-        if await backend.create_user(
-            message.chat.username, message.from_user.id, data["gender"], data["floor"]
+        if backend.create_user(
+            username=message.chat.username, user_id=message.from_user.id, sex=data["gender"], floor=data["floor"]
         ):
             await message.reply("Вы успешно зарегистрировались. /help")
         else:
             await message.reply(
                 "Что-то пошло не так. Срочно пишите админам (контакты в описании бота)!"
             )
-    reg.finish()
+    await state.finish()
 
 
 @dp.message_handler(commands=["help"])
@@ -156,5 +156,5 @@ async def other(message: aiogram.types.Message):
 
 
 if __name__ == "__main__":
-    aiogram.utils.executor.start_polling(dp)
     backend = UserBackend(SERVER)
+    aiogram.utils.executor.start_polling(dp)
