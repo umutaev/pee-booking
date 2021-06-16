@@ -54,5 +54,19 @@ class TimetableBackend:
     def cancel(self, username) -> bool:
         ...  # TODO: check if user is signed up and if so, cancel reservation
 
-    def fetch(self) -> ...:
-        ...  # TODO: fetch timetable and return it
+    def fetch(self, user_id) -> str:
+        r = requests.get(self._server + "/" + str(user_id))
+        if r.status_code == 400:
+                return "Вы не зарегистрированы"
+        body = r.json()
+        gender = body["gender"]
+        floor = body["floor"]
+        timetable_raw = requests.get(self._server + "/" + str(gender) + "/" + str(floor)).json()
+        timetable = "Расписание для вашего этажа и пола\n"
+        for item in timetable_raw:
+            record = item["time"] + "\t"
+            record += item["users"][0] + "\t"
+            record += item["users"][1] + "\n"
+            timetable += record
+        return timetable
+            
