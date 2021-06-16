@@ -176,12 +176,16 @@ async def get_user(request):
 		except:
 			logging.warning("User does not exist")
 			raise web.HTTPBadRequest
+		if user.gender == "M":
+			gender = 1
+		else:
+			gender = 2
 		response = {
 			"telegram": user.telegram_id,
 			"username": user.username,
 			"admin": user.is_admin,
 			"floor": user.floor,
-			"gender": user.gender
+			"gender": gender
 		}
 		return web.json_response(response)
 	else:
@@ -194,12 +198,16 @@ async def get_user(request):
 		except:
 			logging.warning("User does not exist")
 			raise web.HTTPBadRequest
+		if user.gender == "M":
+			gender = 1
+		else:
+			gender = 2
 		response = {
 			"telegram": user.telegram_id,
 			"username": user.username,
 			"admin": user.is_admin,
 			"floor": user.floor,
-			"gender": user.gender
+			"gender": gender
 		}
 		return web.json_response(response)
 	

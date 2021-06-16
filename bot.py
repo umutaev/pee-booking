@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 
-from bot_backend import UserBackend
+from bot_backend import TimetableBackend, UserBackend
 
 # Logging
 logging.basicConfig(filename="bot.log", filemode="a", encoding="utf-8")
@@ -29,7 +29,7 @@ class reg(StatesGroup):
 
 @dp.message_handler(commands=["start"])
 async def handle_start(message: aiogram.types.Message):
-    UserExists = backend.check_user(username=message.chat.username)
+    UserExists = user_backend.check_user(username=message.chat.username)
     if not UserExists:
         keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
             row_width=1, one_time_keyboard=True
@@ -94,7 +94,7 @@ async def service_sign_up(
 ):
     await state.update_data(floor=message.text)
     async with state.proxy() as data:
-        if backend.create_user(
+        if user_backend.create_user(
             username=message.chat.username, user_id=message.from_user.id, sex=data["gender"], floor=data["floor"]
         ):
             await message.reply("Вы успешно зарегистрировались. /help")
@@ -132,8 +132,10 @@ async def handle_help(message: aiogram.types.Message):
 @dp.message_handler(commands=["/timetable"])
 @dp.message_handler(text="Посмотреть расписание⌚")
 async def shower_timetable(message: aiogram.types.Message):
-    ...
-    # TODO: shower timetable
+    timetable = timetable_backend.fetch(message.from_user.id)
+    await message.reply(
+		timetable
+	)
 
 
 @dp.message_handler(commands=["/sign"])
@@ -156,5 +158,6 @@ async def other(message: aiogram.types.Message):
 
 
 if __name__ == "__main__":
-    backend = UserBackend(SERVER)
+    user_backend = UserBackend(SERVER)
+    timetable_backend = TimetableBackend(SERVER)
     aiogram.utils.executor.start_polling(dp)
