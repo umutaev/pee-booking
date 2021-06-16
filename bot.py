@@ -3,19 +3,46 @@ from os import environ
 
 from aiogram import Bot, Dispatcher
 import aiogram
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
+
+from bot_backend import UserBackend
 
 # Logging
 logging.basicConfig(filename="bot.log", filemode="a", encoding="utf-8")
 
+# Config
 API_TOKEN = environ["PEE_BOOKING_BOT_TOKEN"]
+SERVER = "http://localhost"
+FLOORS = ["1", "2", "3", "4"]
 
 # Bot
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
+
+class reg(StatesGroup):
+    gender = aiogram.dispatcher.filters.state.State()
+    floor = aiogram.dispatcher.filters.state.State()
 
 
 @dp.message_handler(commands=["start"])
 async def handle_start(message: aiogram.types.Message):
+    if not await backend.check_user(username=message.chat.username):
+        keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
+            row_width=1, one_time_keyboard=True
+        )
+        keyboard_markup.row(aiogram.types.KeyboardButton("Зарегистрироваться"))
+        await message.reply(
+            f"Нужно зарегистрироваться.\n"
+            "Нажимая кнопку зарегистрироваться вы даёте своё согласие на обработку "
+            "персональных данных согласно 152-ФЗ от 27.07.2006. И да, если вам нет 14, то давать это согласие "
+            "вы типа не можете, так что пипи тоже сделать не получится. ¯​\_(ツ)_/¯",
+            reply_markup=keyboard_markup,
+        )
+        return
     keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
         row_width=1, one_time_keyboard=True
     )
@@ -28,6 +55,54 @@ async def handle_start(message: aiogram.types.Message):
         "списка команд",
         reply_markup=keyboard_markup,
     )
+
+
+@dp.message_handler(text="Зарегистрироваться", state="*")
+async def service_sign_up(message: aiogram.types.Message):
+    keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
+        row_width=1, one_time_keyboard=True
+    )
+    keyboard_markup.row(aiogram.types.KeyboardButton("М"))
+    keyboard_markup.row(aiogram.types.KeyboardButton("Ж"))
+    await message.reply(
+        f"Пол?",
+        reply_markup=keyboard_markup,
+    )
+    await reg.next()
+
+
+@dp.message_handler(text=["М", "Ж"], state=reg.gender)
+async def service_sign_up(
+    message: aiogram.types.Message, state: aiogram.dispatcher.FSMContext
+):
+    await state.update_data(gender=message.text)
+    keyboard_markup = aiogram.types.ReplyKeyboardMarkup(
+        row_width=1, one_time_keyboard=True
+    )
+    for floor in FLOORS:
+        keyboard_markup.row(aiogram.types.KeyboardButton(floor))
+    await message.reply(
+        f"Этаж?",
+        reply_markup=keyboard_markup,
+    )
+    await reg.next()
+
+
+@dp.message_handler(text=FLOORS, state=reg.floor)
+async def service_sign_up(
+    message: aiogram.types.Message, state: aiogram.dispatcher.FSMContext
+):
+    await state.update_data(floor=message.text)
+    async with state.proxy() as data:
+        if await backend.create_user(
+            message.chat.username, message.from_user.id, data["gender"], data["floor"]
+        ):
+            await message.reply("Вы успешно зарегистрировались. /help")
+        else:
+            await message.reply(
+                "Что-то пошло не так. Срочно пишите админам (контакты в описании бота)!"
+            )
+    reg.finish()
 
 
 @dp.message_handler(commands=["help"])
@@ -55,10 +130,31 @@ async def handle_help(message: aiogram.types.Message):
 
 
 @dp.message_handler(commands=["/timetable"])
-def handle_timetable(message):
+@dp.message_handler(text="Посмотреть расписание⌚")
+async def shower_timetable(message: aiogram.types.Message):
     ...
     # TODO: shower timetable
 
 
+@dp.message_handler(commands=["/sign"])
+@dp.message_handler(text="Записаться в душ 🚿")
+async def make_an_appointement(message: aiogram.types.Message):
+    ...
+    # TODO: shower sign up
+
+
+@dp.message_handler(commands=["/delete"])
+@dp.message_handler(text="Выйти из очереди🤢")
+async def delete_an_appointement(message: aiogram.types.Message):
+    ...
+    # TODO: shower unsign up
+
+
+@dp.message_handler()
+async def other(message: aiogram.types.Message):
+    await message.reply("Не знаю такую команду. Хочешь в душ? Пиши /help")
+
+
 if __name__ == "__main__":
     aiogram.utils.executor.start_polling(dp)
+    backend = UserBackend(SERVER)
