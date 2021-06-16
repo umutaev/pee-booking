@@ -151,3 +151,40 @@ async def new_user(request):
 	db.add(new_user)
 	db.commit()
 	raise web.HTTPOk
+
+@routes.get("/{user_id}")
+async def get_user(request):
+	user_id = request.match_info["user_id"]
+	logging.warning("Requesting user with id {}", user_id)
+	if user_id.isdigit():
+		telegram_id = int(user_id)
+		user = (
+			db.query(User)
+			.filter(User.telegram_id == telegram_id)
+			.one()
+		)
+		if not user:
+			logging.warning("User does not exist")
+			raise web.HTTPBadRequest
+		response = {
+			"telegram": user.telegram_id,
+			"username": user.username,
+			"admin": user.is_admin
+		}
+		return web.json_response(response)
+	else:
+		user = (
+			db.query(User)
+			.filter(User.username == user_id)
+			.one()
+		)
+		if not user:
+			logging.warning("User does not exist")
+			raise web.HTTPBadRequest
+		response = {
+			"telegram": user.telegram_id,
+			"username": user.username,
+			"admin": user.is_admin
+		}
+		return web.json_response(response)
+	
