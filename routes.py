@@ -195,7 +195,9 @@ async def get_user(request):
 		response = {
 			"telegram": user.telegram_id,
 			"username": user.username,
-			"admin": user.is_admin
+			"admin": user.is_admin,
+			"floor": user.floor,
+			"gender": user.gender
 		}
 		return web.json_response(response)
 	
