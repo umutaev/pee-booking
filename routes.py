@@ -167,12 +167,13 @@ async def get_user(request):
 	logging.warning("Requesting user with id " + str(user_id))
 	if user_id.isdigit():
 		telegram_id = int(user_id)
-		user = (
-			db.query(User)
-			.filter(User.telegram_id == telegram_id)
-			.one()
-		)
-		if not user:
+		try:
+			user = (
+				db.query(User)
+				.filter(User.telegram_id == telegram_id)
+				.one()
+			)
+		except:
 			logging.warning("User does not exist")
 			raise web.HTTPBadRequest
 		response = {
@@ -184,12 +185,13 @@ async def get_user(request):
 		}
 		return web.json_response(response)
 	else:
-		user = (
-			db.query(User)
-			.filter(User.username == user_id)
-			.one()
-		)
-		if not user:
+		try:
+			user = (
+				db.query(User)
+				.filter(User.username == user_id)
+				.one()
+			)
+		except:
 			logging.warning("User does not exist")
 			raise web.HTTPBadRequest
 		response = {
